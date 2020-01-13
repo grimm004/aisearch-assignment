@@ -217,9 +217,10 @@ codes_and_names = {'BF': 'brute-force search',
 #######################################################################################################
 
 
+#print("\n".join("".join("%02d " % element for element in row) for row in distance_matrix))
 
 
-def h(state, child_state):
+def h0(state, child_state):
     return 0 if len(child_state) == len(distance_matrix) else distance_matrix[state[-1]][child_state[-1]]
 
 
@@ -240,6 +241,12 @@ class Node:
         self.depth = depth
         self.f_value = f_value
 
+    def __str__(self):
+        return "%d %d %d %d" % (self.id, len(self.state), self.path_cost, self.f_value)
+
+    def __repr__(self):
+        return self.__str__()
+
 
 def a_star(nodes):
     new_id = 0
@@ -248,7 +255,7 @@ def a_star(nodes):
 
     while len(queue) > 0:
         queue.sort(key=lambda n: n.f_value)
-        node = queue.pop()
+        node = queue.pop(0)
 
         if len(node.state) == len(distance_matrix):
             return node.id
@@ -257,7 +264,7 @@ def a_star(nodes):
 
         for child_state in get_child_states(node.state):
             new_id += 1
-            f = g + h(node.state, child_state)
+            f = g + h0(node.state, child_state)
             nodes.append(Node(new_id, child_state, node.id,
                               node.path_cost + distance_matrix[node.state[-1]][child_state[-1]],
                               node.depth + 1, f))
@@ -269,7 +276,8 @@ def a_star(nodes):
 node_list = []
 id_ = a_star(node_list)
 tour = node_list[id_].state.copy()
-tour_length = distance_matrix[tour[0]][tour[len(tour) - 1]] + sum([distance_matrix[tour[i]][tour[i + 1]] for i in range(0, len(tour) - 1)])
+tour_length = node_list[id_].path_cost + distance_matrix[node_list[id_].state[0]][node_list[id_].state[-1]]
+#tour_length = distance_matrix[tour[0]][tour[len(tour) - 1]] + sum([distance_matrix[tour[i]][tour[i + 1]] for i in range(0, len(tour) - 1)])
 
 
 
