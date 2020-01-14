@@ -117,7 +117,7 @@ def make_distance_matrix_symmetric(num_cities):
 ############ supplied internally as the default file or via a command line execution.      ############
 ############ if your input file does not exist then the program will crash.                ############
 
-input_file = "AISearchfile535.txt"
+input_file = "AISearchfile175.txt"
 
 #######################################################################################################
 
@@ -220,61 +220,67 @@ codes_and_names = {'BF': 'brute-force search',
 #print("\n".join("".join("%02d " % element for element in row) for row in distance_matrix))
 
 
+import heapq
+
+
 def h0(state, child_state):
     return 0 if len(child_state) == len(distance_matrix) else distance_matrix[state[-1]][child_state[-1]]
 
 
-def get_child_states(state):
-    states = []
-    for i in range(len(distance_matrix)):
-        if i not in state:
-            states.append(state.copy() + [i])
-    return states
+def h1(child_state): # Greedy completion
+    tour_length = 0
+    while len(child_state) < len(distance_matrix):
+        remaining_cities = [(distance_matrix[i][child_state[-1]], i) for i in range(len(distance_matrix)) if i not in child_state]
+        cost, city = min(remaining_cities)
+        child_state.append(city)
+        tour_length += cost
+    return tour_length
 
 
 class Node:
-    def __init__(self, id_, state, parent_id, path_cost, depth, f_value):
+    def __init__(self, id_, state, parent_id, path_cost, depth):
         self.id = id_
         self.state = state
         self.parent_id = parent_id
         self.path_cost = path_cost
         self.depth = depth
-        self.f_value = f_value
 
     def __str__(self):
-        return "%d %d %d %d" % (self.id, len(self.state), self.path_cost, self.f_value)
+        return "Node(%d, %d, %d)" % (self.id, len(self.state), self.path_cost)
 
     def __repr__(self):
         return self.__str__()
 
 
-def a_star(nodes):
+def a_star():
     new_id = 0
-    nodes.append(Node(new_id, [0], -1, 0, 0, 0))
-    queue = [nodes[new_id]]
+    nodes = [Node(new_id, [0], -1, 0, 0)]
+    
+    fringe = [(0, new_id, nodes[new_id])]
+    heapq.heapify(fringe)
 
-    while len(queue) > 0:
-        queue.sort(key=lambda n: n.f_value)
-        node = queue.pop(0)
+    largest_tour = []
+
+    while len(fringe) > 0:
+        _, _, node = heapq.heappop(fringe)
 
         if len(node.state) == len(distance_matrix):
-            return node.id
+            return node.id, nodes
 
-        g = node.path_cost
-
-        for child_state in get_child_states(node.state):
-            new_id += 1
-            f = g + h0(node.state, child_state)
-            nodes.append(Node(new_id, child_state, node.id,
-                              node.path_cost + distance_matrix[node.state[-1]][child_state[-1]],
-                              node.depth + 1, f))
-            queue.append(nodes[new_id])
+        for i in range(len(distance_matrix)):
+            if i not in node.state:
+                child_state = node.state + [i]
+                new_id += 1
+                g = node.path_cost + distance_matrix[node.state[-1]][child_state[-1]]
+                f = g + h1(child_state.copy())
+                new_node = Node(new_id, child_state, node.id, g, node.depth + 1)
+                nodes.append(new_node)
+                heapq.heappush(fringe, (f, new_id, new_node))
 
     return None
 
 
-node_list = []
-id_ = a_star(node_list)
+id_, node_list = a_star()
 tour = node_list[id_].state.copy()
 tour_length = node_list[id_].path_cost + distance_matrix[node_list[id_].state[0]][node_list[id_].state[-1]]
 #tour_length = distance_matrix[tour[0]][tour[len(tour) - 1]] + sum([distance_matrix[tour[i]][tour[i + 1]] for i in range(0, len(tour) - 1)])
