@@ -117,7 +117,7 @@ def make_distance_matrix_symmetric(num_cities):
 ############ supplied internally as the default file or via a command line execution.      ############
 ############ if your input file does not exist then the program will crash.                ############
 
-input_file = "AISearchfile175.txt"
+input_file = "AISearchfile535.txt"
 
 #######################################################################################################
 
@@ -223,7 +223,7 @@ codes_and_names = {'BF': 'brute-force search',
 import heapq
 
 
-def h0(state, child_state):
+def h0(state, child_state): # Closest neighbour
     return 0 if len(child_state) == len(distance_matrix) else distance_matrix[state[-1]][child_state[-1]]
 
 
@@ -234,6 +234,13 @@ def h1(child_state): # Greedy completion
         cost, city = min(remaining_cities)
         child_state.append(city)
         tour_length += cost
+    return tour_length
+
+
+def h2(child_state): # Maximium graph weights
+    tour_length = 0
+    for cost, city in [(distance_matrix[i][child_state[-1]], i) for i in range(len(distance_matrix)) if i not in child_state]:
+        m = max(distance_matrix[])
     return tour_length
 
 
@@ -253,6 +260,7 @@ class Node:
 
 
 def a_star():
+    global while_iterations
     new_id = 0
     nodes = [Node(new_id, [0], -1, 0, 0)]
     
@@ -264,27 +272,34 @@ def a_star():
     while len(fringe) > 0:
         _, _, node = heapq.heappop(fringe)
 
+        while_iterations += 1
+
         if len(node.state) == len(distance_matrix):
             return node.id, nodes
+
+        if len(largest_tour) < len(node.state):
+            largest_tour = node.state.copy()
+            print(len(largest_tour))
+            print(while_iterations)
 
         for i in range(len(distance_matrix)):
             if i not in node.state:
                 child_state = node.state + [i]
                 new_id += 1
                 g = node.path_cost + distance_matrix[node.state[-1]][child_state[-1]]
-                f = g + h1(child_state.copy())
+                f = g + h2(child_state.copy())
                 new_node = Node(new_id, child_state, node.id, g, node.depth + 1)
                 nodes.append(new_node)
                 heapq.heappush(fringe, (f, new_id, new_node))
 
     return None
 
-
+while_iterations = 0
 id_, node_list = a_star()
 tour = node_list[id_].state.copy()
 tour_length = node_list[id_].path_cost + distance_matrix[node_list[id_].state[0]][node_list[id_].state[-1]]
 #tour_length = distance_matrix[tour[0]][tour[len(tour) - 1]] + sum([distance_matrix[tour[i]][tour[i + 1]] for i in range(0, len(tour) - 1)])
-
+print(while_iterations)
 
 
 
@@ -321,7 +336,7 @@ else:
 ############ for example, dcs0iasSep22105857.txt; if dcs0iasSep22105857.txt already exists ############
 ############ then it is overwritten                                                        ############
 #######################################################################################################
-
+flag = ""
 if flag == "good":
     local_time = time.asctime(
         time.localtime(time.time()))  # return 24-character string in form "Tue Jan 13 10:17:09 2009"
