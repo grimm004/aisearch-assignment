@@ -237,11 +237,11 @@ def h1(child_state): # Greedy completion
     return tour_length
 
 
-def h2(child_state): # Maximium graph weights
-    tour_length = 0
-    for cost, city in [(distance_matrix[i][child_state[-1]], i) for i in range(len(distance_matrix)) if i not in child_state]:
-        m = max(distance_matrix[])
-    return tour_length
+#def h2(child_state): # Maximium graph weights
+#    tour_length = 0
+#    for cost, city in [(distance_matrix[i][child_state[-1]], i) for i in range(len(distance_matrix)) if i not in child_state]:
+#        m = max(distance_matrix[])
+#    return tour_length
 
 
 class Node:
@@ -260,7 +260,6 @@ class Node:
 
 
 def a_star():
-    global while_iterations
     new_id = 0
     nodes = [Node(new_id, [0], -1, 0, 0)]
     
@@ -271,8 +270,6 @@ def a_star():
 
     while len(fringe) > 0:
         _, _, node = heapq.heappop(fringe)
-
-        while_iterations += 1
 
         if len(node.state) == len(distance_matrix):
             return node.id, nodes
@@ -294,7 +291,6 @@ def a_star():
 
     return None
 
-while_iterations = 0
 id_, node_list = a_star()
 tour = node_list[id_].state.copy()
 tour_length = node_list[id_].path_cost + distance_matrix[node_list[id_].state[0]][node_list[id_].state[-1]]
