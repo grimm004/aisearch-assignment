@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import random
+import heapq
 
 
 def read_file_into_string(input_file, from_ord, to_ord):
@@ -117,7 +118,7 @@ def make_distance_matrix_symmetric(num_cities):
 ############ supplied internally as the default file or via a command line execution.      ############
 ############ if your input file does not exist then the program will crash.                ############
 
-input_file = "AISearchfile535.txt"
+input_file = "AISearchfile012.txt"
 
 #######################################################################################################
 
@@ -172,11 +173,11 @@ my_user_name = "wcrr51"
 
 ############ "my_first_name" = your first name, e.g., mine is Iain                         ############
 
-my_first_name = "Max"
+my_first_name = ""
 
 ############ "my_last_name" = your last name, e.g., mine is Stewart                        ############
 
-my_last_name = "Grimmett"
+my_last_name = ""
 
 ############ "alg_code" = the two-digit code that tells me which algorithm you have        ############
 ############ implemented (see the assignment pdf), where the codes are:                    ############
@@ -196,7 +197,7 @@ alg_code = "AS"
 ############ you like, e.g., "in my basic greedy search, I broke ties by always visiting   ############
 ############ the first nearest city found" or leave it empty if you wish                   ############
 
-added_note = ""
+added_note = "The A* heuristic here looks to find a large over-estimation of the path cost to a goal state."
 
 ############ the line below sets up a dictionary of codes and search names (you need do    ############
 ############ nothing unless you implement an alternative algorithm and I give you a code   ############
@@ -216,88 +217,57 @@ codes_and_names = {'BF': 'brute-force search',
 ############    now the code for your algorithm should begin                               ############
 #######################################################################################################
 
+max_cost = distance_matrix[0][0]
+for row in distance_matrix:
+    for cost in row:
+        if cost > max_cost:
+            max_cost = cost
 
-#print("\n".join("".join("%02d " % element for element in row) for row in distance_matrix))
-
-
-import heapq
-
-
-def h0(state, child_state): # Closest neighbour
-    return 0 if len(child_state) == len(distance_matrix) else distance_matrix[state[-1]][child_state[-1]]
-
-
-def h1(child_state): # Greedy completion
-    tour_length = 0
-    while len(child_state) < len(distance_matrix):
-        remaining_cities = [(distance_matrix[i][child_state[-1]], i) for i in range(len(distance_matrix)) if i not in child_state]
-        cost, city = min(remaining_cities)
-        child_state.append(city)
-        tour_length += cost
-    return tour_length
-
-
-#def h2(child_state): # Maximium graph weights
-#    tour_length = 0
-#    for cost, city in [(distance_matrix[i][child_state[-1]], i) for i in range(len(distance_matrix)) if i not in child_state]:
-#        m = max(distance_matrix[])
-#    return tour_length
-
-
-class Node:
-    def __init__(self, id_, state, parent_id, path_cost, depth):
-        self.id = id_
-        self.state = state
-        self.parent_id = parent_id
-        self.path_cost = path_cost
-        self.depth = depth
-
-    def __str__(self):
-        return "Node(%d, %d, %d)" % (self.id, len(self.state), self.path_cost)
-
-    def __repr__(self):
-        return self.__str__()
+def h0(child_state):
+    return (len(distance_matrix) - len(child_state)) * max_cost
 
 
 def a_star():
     new_id = 0
-    nodes = [Node(new_id, [0], -1, 0, 0)]
-    
+    nodes = [(new_id, [0], -1, 0, 0)]
+
     fringe = [(0, new_id, nodes[new_id])]
     heapq.heapify(fringe)
 
-    largest_tour = []
+    best_goal_node = None
 
     while len(fringe) > 0:
         _, _, node = heapq.heappop(fringe)
+        _, state, parent_id, path_cost, depth = node
 
-        if len(node.state) == len(distance_matrix):
-            return node.id, nodes
+        if best_goal_node is not None and best_goal_node[3] < path_cost:
+            return best_goal_node[0], nodes
 
-        if len(largest_tour) < len(node.state):
-            largest_tour = node.state.copy()
-            print(len(largest_tour))
-            print(while_iterations)
-
-        for i in range(len(distance_matrix)):
-            if i not in node.state:
-                child_state = node.state + [i]
-                new_id += 1
-                g = node.path_cost + distance_matrix[node.state[-1]][child_state[-1]]
-                f = g + h2(child_state.copy())
-                new_node = Node(new_id, child_state, node.id, g, node.depth + 1)
-                nodes.append(new_node)
-                heapq.heappush(fringe, (f, new_id, new_node))
+        if len(state) == len(distance_matrix):
+            if best_goal_node is None or path_cost < best_goal_node[3]:
+                best_goal_node = node
+        else:
+            for i in range(len(distance_matrix)):
+                if i not in state:
+                    child_state = state + [i]
+                    new_id += 1
+                    g = path_cost + distance_matrix[state[-1]][child_state[-1]]
+                    if len(child_state) == len(distance_matrix):
+                        g += distance_matrix[child_state[0]][child_state[-1]]
+                    new_node = (new_id, child_state, parent_id, g, depth + 1)
+                    nodes.append(new_node)
+                    heapq.heappush(fringe, (g + h0(child_state.copy()), new_id, new_node))
 
     return None
 
+
+start = time.time()
 id_, node_list = a_star()
-tour = node_list[id_].state.copy()
-tour_length = node_list[id_].path_cost + distance_matrix[node_list[id_].state[0]][node_list[id_].state[-1]]
-#tour_length = distance_matrix[tour[0]][tour[len(tour) - 1]] + sum([distance_matrix[tour[i]][tour[i + 1]] for i in range(0, len(tour) - 1)])
-print(while_iterations)
+tour = node_list[id_][1].copy()
+tour_length = node_list[id_][3]
+end = time.time()
 
-
+# print(end - start)
 
 #######################################################################################################
 ############ the code for your algorithm should now be complete and you should have        ############
@@ -332,7 +302,7 @@ else:
 ############ for example, dcs0iasSep22105857.txt; if dcs0iasSep22105857.txt already exists ############
 ############ then it is overwritten                                                        ############
 #######################################################################################################
-flag = ""
+
 if flag == "good":
     local_time = time.asctime(
         time.localtime(time.time()))  # return 24-character string in form "Tue Jan 13 10:17:09 2009"
@@ -350,19 +320,3 @@ if flag == "good":
         f.write("\nNOTE = " + added_note)
     f.close()
     print("I have successfully written the tour to the output file " + output_file_name + ".")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
